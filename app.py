@@ -1,12 +1,12 @@
 import streamlit as st
 import math
 
-st.set_page_config(page_title="CivilCheck Pro", page_icon="🏗️", layout="centered")
+st.set_page_config(page_title="CivilCheck Pro - Bolivia", page_icon="🏗️", layout="centered")
 
 st.title("🏗️ CivilCheck Pro: Verificación en Obra")
+st.caption("Conforme a la Norma Boliviana NB 1225001 y ACI 318")
 st.markdown("---")
 
-# Menú actualizado
 menu = ["Vigas y Nervios", "Losas", "Columnas", "Zapatas Aisladas", "Módulo de Acero"]
 choice = st.sidebar.radio("Navegación", menu)
 
@@ -17,13 +17,29 @@ if choice == "Vigas y Nervios":
                              ["Simplemente apoyada", "Un extremo continuo", "Ambos extremos continuos", "Voladizo"])
     
     coef_vigas = {"Simplemente apoyada": 16, "Un extremo continuo": 18.5, "Ambos extremos continuos": 21, "Voladizo": 8}
-    h = L / coef_vigas[condicion]
+    coeficiente = coef_vigas[condicion]
+    
+    h = L / coeficiente
     b = h / 2
     deflexion_max = (L * 100) / 300 
+    
+    st.info(f"📐 Criterio NB 1225001 (Cap. 9): **$L / {coeficiente}$**")
     
     st.success(f"Peralte mínimo recomendado ($h$): **{math.ceil(h*100)} cm**")
     st.info(f"Ancho sugerido ($b$): **{math.ceil(b*100)} cm**")
     st.warning(f"Deflexión máxima permisible ($L/300$): **{round(deflexion_max, 2)} cm**")
+    
+    with st.expander("📚 Ver tabla NB 1225001 / ACI 318"):
+        st.markdown("""
+        | Condición de Apoyo | Relación Peralte Mínimo ($h$) |
+        | :--- | :--- |
+        | Simplemente apoyada | $L / 16$ |
+        | Un extremo continuo | $L / 18.5$ |
+        | Ambos extremos continuos | $L / 21$ |
+        | Voladizo | $L / 8$ |
+        
+        *Nota: Espesores mínimos para vigas no preesforzadas usando acero de $fy = 420$ MPa.*
+        """)
 
 elif choice == "Losas":
     st.header("📐 Pre-dimensionamiento de Losas")
@@ -41,11 +57,15 @@ elif choice == "Losas":
         
         if tipo_losa == "Losa Maciza (1 Dirección)":
             coef_losas = {"Simplemente apoyada": 20, "Un extremo continuo": 24, "Ambos extremos continuos": 28, "Voladizo": 10}
+            cap_norma = "(Cap. 7)"
         else:
-            # Las losas nervadas en 1 dir usan los coeficientes de vigas
             coef_losas = {"Simplemente apoyada": 16, "Un extremo continuo": 18.5, "Ambos extremos continuos": 21, "Voladizo": 8}
+            cap_norma = "(Cap. 9 - Nervios)"
             
-        h = L / coef_losas[condicion]
+        coeficiente_losa = coef_losas[condicion]
+        h = L / coeficiente_losa
+        
+        st.info(f"📐 Criterio NB 1225001 {cap_norma}: **$L / {coeficiente_losa}$**")
         st.success(f"Espesor total mínimo de la losa ($h$): **{math.ceil(h*100)} cm**")
         if tipo_losa == "Losa Alivianada con Viguetas (1 Dirección)":
             st.caption("Nota: Este espesor incluye la carpeta de compresión (generalmente 5 cm).")
@@ -59,14 +79,16 @@ elif choice == "Losas":
             "Paño Interior"
         ])
         
-        # Coeficientes prácticos ACI para reticulares (waffle slabs)
         coef_reticular = {
             "Paño Exterior (sin viga de borde rígida)": 24, 
             "Paño Exterior (con viga de borde)": 28, 
             "Paño Interior": 30
         }
         
-        h_ret = L_mayor / coef_reticular[condicion_2dir]
+        coeficiente_ret = coef_reticular[condicion_2dir]
+        h_ret = L_mayor / coeficiente_ret
+        
+        st.info(f"📐 Criterio práctico (Paños cuadrados/rectangulares): **$L / {coeficiente_ret}$**")
         st.success(f"Peralte total recomendado ($h$): **{math.ceil(h_ret*100)} cm**")
         st.caption("El bloque/casetón será el peralte total menos la loseta de compresión (5 a 7 cm).")
 
