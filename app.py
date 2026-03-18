@@ -67,3 +67,38 @@ elif choice == "Cuantía de Acero":
         cantidad = math.ceil(area_req / area_barra)
         area_provista = cantidad * area_barra
         st.write(f"- **{cantidad} varillas de {diametro}** (Provee {round(area_provista, 2)} $cm^2$)")
+       
+
+elif choice == "Columnas (Carga Axial)":
+    st.header("🏢 Pre-dimensionamiento de Columnas")
+    st.write("Criterio por área tributaria y carga de servicio.")
+    
+    at = st.number_input("Área Tributaria ($m^2$)", min_value=1.0, value=25.0)
+    n = st.number_input("Número de pisos", min_value=1, value=5)
+    fc = st.selectbox("Resistencia f'c ($kg/cm^2$)", [210, 250, 280, 350])
+    tipo = st.selectbox("Ubicación de columna", ["Central", "Extrema/Esquina"])
+    
+    # Carga estimada: 1000 kg/m2 por piso (Sencillo y conservador)
+    P = 1000 * at * n
+    # Factores de eficiencia según posición
+    n_factor = 0.45 if tipo == "Central" else 0.35
+    
+    area_col = P / (n_factor * fc)
+    lado = math.sqrt(area_col)
+    
+    st.success(f"Carga Total Estimada: **{P/1000:,.1f} Toneladas**")
+    st.info(f"Sección requerida: **{math.ceil(lado)} x {math.ceil(lado)} cm**")
+
+elif choice == "Zapatas Aisladas":
+    st.header("🦶 Cimiento: Zapata Aislada")
+    st.write("Estimación rápida del área de desplante.")
+    
+    carga_ton = st.number_input("Carga total de la columna (Toneladas)", min_value=1.0, value=50.0)
+    q_adm = st.number_input("Capacidad admisible del suelo ($kg/cm^2$)", min_value=0.1, value=2.0)
+    
+    # Área = (P * 1.1) / q_adm  (El 1.1 es por peso propio de la zapata)
+    area_zap = (carga_ton * 1000 * 1.1) / q_adm
+    lado_z = math.sqrt(area_zap)
+    
+    st.success(f"Área necesaria: **{round(area_zap/10000, 2)} $m^2$**")
+    st.info(f"Lado de zapata cuadrada: **{math.ceil(lado_z)} cm**")
