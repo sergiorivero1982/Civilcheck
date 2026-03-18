@@ -7,7 +7,7 @@ st.title("🏗️ CivilCheck Pro: Verificación en Obra")
 st.markdown("---")
 
 # Menú actualizado
-menu = ["Vigas y Nervios", "Losas Macizas (1 Dir)", "Columnas", "Zapatas Aisladas", "Módulo de Acero"]
+menu = ["Vigas y Nervios", "Losas", "Columnas", "Zapatas Aisladas", "Módulo de Acero"]
 choice = st.sidebar.radio("Navegación", menu)
 
 if choice == "Vigas y Nervios":
@@ -25,15 +25,50 @@ if choice == "Vigas y Nervios":
     st.info(f"Ancho sugerido ($b$): **{math.ceil(b*100)} cm**")
     st.warning(f"Deflexión máxima permisible ($L/300$): **{round(deflexion_max, 2)} cm**")
 
-elif choice == "Losas Macizas (1 Dir)":
-    st.header("📐 Espesor de Losa Maciza")
-    L = st.number_input("Luz libre del tramo (metros)", min_value=0.5, value=4.0, step=0.1)
-    condicion = st.selectbox("Condición de apoyo", 
-                             ["Simplemente apoyada", "Un extremo continuo", "Ambos extremos continuos", "Voladizo"])
+elif choice == "Losas":
+    st.header("📐 Pre-dimensionamiento de Losas")
     
-    coef_losas = {"Simplemente apoyada": 20, "Un extremo continuo": 24, "Ambos extremos continuos": 28, "Voladizo": 10}
-    h = L / coef_losas[condicion]
-    st.success(f"Espesor mínimo de losa ($h$): **{math.ceil(h*100)} cm**")
+    tipo_losa = st.selectbox("Tipo de Losa", [
+        "Losa Maciza (1 Dirección)", 
+        "Losa Alivianada con Viguetas (1 Dirección)", 
+        "Losa Reticular / Casetonada (2 Direcciones)"
+    ])
+    
+    if tipo_losa == "Losa Maciza (1 Dirección)" or tipo_losa == "Losa Alivianada con Viguetas (1 Dirección)":
+        L = st.number_input("Luz libre del tramo (metros)", min_value=0.5, value=4.0, step=0.1)
+        condicion = st.selectbox("Condición de apoyo", 
+                                 ["Simplemente apoyada", "Un extremo continuo", "Ambos extremos continuos", "Voladizo"])
+        
+        if tipo_losa == "Losa Maciza (1 Dirección)":
+            coef_losas = {"Simplemente apoyada": 20, "Un extremo continuo": 24, "Ambos extremos continuos": 28, "Voladizo": 10}
+        else:
+            # Las losas nervadas en 1 dir usan los coeficientes de vigas
+            coef_losas = {"Simplemente apoyada": 16, "Un extremo continuo": 18.5, "Ambos extremos continuos": 21, "Voladizo": 8}
+            
+        h = L / coef_losas[condicion]
+        st.success(f"Espesor total mínimo de la losa ($h$): **{math.ceil(h*100)} cm**")
+        if tipo_losa == "Losa Alivianada con Viguetas (1 Dirección)":
+            st.caption("Nota: Este espesor incluye la carpeta de compresión (generalmente 5 cm).")
+
+    else:
+        st.write("Criterio basado en la luz libre mayor del paño ($L_n$).")
+        L_mayor = st.number_input("Luz libre MAYOR del paño (metros)", min_value=2.0, value=6.0, step=0.1)
+        condicion_2dir = st.selectbox("Ubicación del paño", [
+            "Paño Exterior (sin viga de borde rígida)", 
+            "Paño Exterior (con viga de borde)", 
+            "Paño Interior"
+        ])
+        
+        # Coeficientes prácticos ACI para reticulares (waffle slabs)
+        coef_reticular = {
+            "Paño Exterior (sin viga de borde rígida)": 24, 
+            "Paño Exterior (con viga de borde)": 28, 
+            "Paño Interior": 30
+        }
+        
+        h_ret = L_mayor / coef_reticular[condicion_2dir]
+        st.success(f"Peralte total recomendado ($h$): **{math.ceil(h_ret*100)} cm**")
+        st.caption("El bloque/casetón será el peralte total menos la loseta de compresión (5 a 7 cm).")
 
 elif choice == "Columnas":
     st.header("🏢 Pre-dimensionamiento de Columnas")
@@ -53,7 +88,7 @@ elif choice == "Columnas":
     area_col = P / (n_factor * fc)
     lado = math.sqrt(area_col)
     
-    st.success(f"Carga Total Estimada de Servicio: **{P/1000:,.1f} Toneladas**")
+    st.success(f"Carga Estimada de Servicio: **{P/1000:,.1f} Toneladas**")
     st.info(f"Sección cuadrada sugerida: **{math.ceil(lado)} x {math.ceil(lado)} cm**")
 
 elif choice == "Zapatas Aisladas":
@@ -71,7 +106,6 @@ elif choice == "Zapatas Aisladas":
 elif choice == "Módulo de Acero":
     st.header("⚙️ Gestión y Cuantía de Acero")
     
-    # Diccionario con [Area (cm2), Peso Lineal (kg/m)]
     barras = {
         "Ø 6 mm": [0.28, 0.222],
         "Ø 8 mm": [0.50, 0.395],
@@ -103,7 +137,7 @@ elif choice == "Módulo de Acero":
         with col1:
             cant_actual = st.number_input("Cantidad de barras", min_value=1, value=4, step=1)
         with col2:
-            diam_actual = st.selectbox("Diámetro en planos", list(barras.keys()), index=4) # 16mm por defecto, índice ajustado por el 6mm
+            diam_actual = st.selectbox("Diámetro en planos", list(barras.keys()), index=4) 
         
         area_actual = cant_actual * barras[diam_actual][0]
         peso_actual = cant_actual * barras[diam_actual][1]
@@ -120,7 +154,6 @@ elif choice == "Módulo de Acero":
                 area_provista = cant_equiv * area_barra
                 peso_nuevo = cant_equiv * peso_lineal
                 
-                # Para ver si el cambio nos suma muchos kilos al presupuesto
                 dif_peso = peso_nuevo - peso_actual
                 if dif_peso > 0:
                     txt_peso = f"(+{dif_peso:.2f} kg/m extra)"
