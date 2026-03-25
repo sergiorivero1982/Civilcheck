@@ -29,10 +29,10 @@ if choice == "Vigas y Nervios":
     b = h / 2
     deflexion_max = (L * 100) / 300 
     
-    st.info(f"📐 Criterio NB 1225001 (Cap. 9): **$L / {coeficiente}$**")
-    st.success(f"Peralte mínimo recomendado ($h$): **{math.ceil(h*100)} cm**")
-    st.info(f"Ancho sugerido ($b$): **{math.ceil(b*100)} cm**")
-    st.warning(f"Deflexión máxima permisible ($L/300$): **{round(deflexion_max, 2)} cm**")
+    st.info(f"Criterio NB 1225001 (Cap. 9): L / {coeficiente}")
+    st.success(f"Peralte mínimo recomendado (h): **{math.ceil(h*100)} cm**")
+    st.info(f"Ancho sugerido (b): **{math.ceil(b*100)} cm**")
+    st.warning(f"Deflexión máxima permisible (L/300): **{round(deflexion_max, 2)} cm**")
 
 elif choice == "Losas":
     st.header("📐 Pre-dimensionamiento de Losas")
@@ -57,8 +57,8 @@ elif choice == "Losas":
         coeficiente_losa = coef_losas[condicion]
         h = L / coeficiente_losa
         
-        st.info(f"📐 Criterio NB 1225001 {cap_norma}: **$L / {coeficiente_losa}$**")
-        st.success(f"Espesor total mínimo de la losa ($h$): **{math.ceil(h*100)} cm**")
+        st.info(f"Criterio NB 1225001 {cap_norma}: L / {coeficiente_losa}")
+        st.success(f"Espesor total mínimo de la losa (h): **{math.ceil(h*100)} cm**")
     else:
         L_mayor = st.number_input("Luz libre MAYOR del paño (metros)", min_value=2.0, value=6.0, step=0.1)
         condicion_2dir = st.selectbox("Ubicación del paño", [
@@ -70,14 +70,14 @@ elif choice == "Losas":
         coeficiente_ret = coef_reticular[condicion_2dir]
         h_ret = L_mayor / coeficiente_ret
         
-        st.info(f"📐 Criterio práctico: **$L / {coeficiente_ret}$**")
-        st.success(f"Peralte total recomendado ($h$): **{math.ceil(h_ret*100)} cm**")
+        st.info(f"Criterio práctico: L / {coeficiente_ret}")
+        st.success(f"Peralte total recomendado (h): **{math.ceil(h_ret*100)} cm**")
 
 elif choice == "Columnas":
     st.header("🏢 Pre-dimensionamiento de Columnas")
-    at = st.number_input("Área Tributaria ($m^2$)", min_value=1.0, value=25.0, step=1.0)
+    at = st.number_input("Área Tributaria (m2)", min_value=1.0, value=25.0, step=1.0)
     n = st.number_input("Número de pisos", min_value=1, value=5, step=1)
-    fc = st.selectbox("Resistencia f'c ($kg/cm^2$)", [210, 250, 280, 350])
+    fc = st.selectbox("Resistencia f'c (kg/cm2)", [210, 250, 280, 350])
     tipo = st.selectbox("Ubicación de columna", ["Central", "Lateral", "Esquina"])
     
     P = 1000 * at * n
@@ -96,12 +96,12 @@ elif choice == "Columnas":
 elif choice == "Zapatas Aisladas":
     st.header("🦶 Cimiento: Zapata Aislada")
     carga_ton = st.number_input("Carga total de la columna (Ton)", min_value=1.0, value=50.0, step=1.0)
-    q_adm = st.number_input("Capacidad admisible del suelo ($kg/cm^2$)", min_value=0.1, value=2.0, step=0.1)
+    q_adm = st.number_input("Capacidad admisible del suelo (kg/cm2)", min_value=0.1, value=2.0, step=0.1)
     
     q_adm_ton_m2 = q_adm * 10
     area_zap = (carga_ton * 1.1) / q_adm_ton_m2
     lado_z = math.sqrt(area_zap)
-    st.success(f"Área necesaria de desplante: **{round(area_zap, 2)} $m^2$**")
+    st.success(f"Área necesaria de desplante: **{round(area_zap, 2)} m2**")
     st.info(f"Lado sugerido para zapata cuadrada: **{math.ceil(lado_z * 100) / 100} m**")
 
 elif choice == "Muros de Contención":
@@ -109,15 +109,15 @@ elif choice == "Muros de Contención":
     
     col1, col2 = st.columns(2)
     with col1:
-        H = st.number_input("Altura total del muro ($H$) [m]", min_value=1.0, value=3.0, step=0.1)
-        B = st.number_input("Ancho de la base propuesto ($B$) [m]", min_value=0.5, value=2.0, step=0.1)
+        H = st.number_input("Altura total del muro (H) [m]", min_value=1.0, value=3.0, step=0.1)
+        B = st.number_input("Ancho de la base propuesto (B) [m]", min_value=0.5, value=2.0, step=0.1)
     with col2:
-        gamma_s = st.number_input("Peso esp. Suelo ($t/m^3$)", min_value=1.0, value=1.8, step=0.1)
-        phi = st.number_input("Ángulo fricción suelo ($^\circ$)", min_value=15, value=30, step=1)
-        q_adm = st.number_input("q admisible ($kg/cm^2$)", min_value=0.1, value=2.0, step=0.1)
+        gamma_s = st.number_input("Peso esp. Suelo (t/m3)", min_value=1.0, value=1.8, step=0.1)
+        phi = st.number_input("Ángulo fricción suelo (grados)", min_value=15, value=30, step=1)
+        q_adm = st.number_input("q admisible (kg/cm2)", min_value=0.1, value=2.0, step=0.1)
     
     st.markdown("### 1️⃣ Pre-dimensionamiento Recomendado")
-    st.info(f"Ancho de base ($B$) sugerido: **{round(0.5*H, 2)} m a {round(0.7*H, 2)} m**")
+    st.info(f"Ancho de base (B) sugerido: **{round(0.5*H, 2)} m a {round(0.7*H, 2)} m**")
     
     ka = (math.tan(math.radians(45 - phi/2)))**2
     Ea = 0.5 * gamma_s * (H**2) * ka
@@ -131,15 +131,15 @@ elif choice == "Muros de Contención":
     FS_deslizamiento = (W_total * mu) / Ea
     
     st.markdown("### 2️⃣ Verificación de Estabilidad")
-    st.write(f"- Empuje Activo ($E_a$): **{round(Ea, 2)} ton/m**")
+    st.write(f"- Empuje Activo (Ea): **{round(Ea, 2)} ton/m**")
     
     if FS_volteo >= 2.0:
-        st.success(f"✅ FS Volteo: **{round(FS_volteo, 2)}** (Cumple $\ge 2.0$)")
+        st.success(f"✅ FS Volteo: **{round(FS_volteo, 2)}** (Cumple mayor o igual a 2.0)")
     else:
         st.error(f"❌ FS Volteo: **{round(FS_volteo, 2)}** (Falla, requiere mayor base)")
         
     if FS_deslizamiento >= 1.5:
-        st.success(f"✅ FS Deslizamiento: **{round(FS_deslizamiento, 2)}** (Cumple $\ge 1.5$)")
+        st.success(f"✅ FS Deslizamiento: **{round(FS_deslizamiento, 2)}** (Cumple mayor o igual a 1.5)")
     else:
         st.error(f"❌ FS Deslizamiento: **{round(FS_deslizamiento, 2)}** (Falla, requiere mayor base)")
 
@@ -151,4 +151,39 @@ elif choice == "Muros de Contención":
         q_max_ton = (W_total / B) * (1 + (6 * excentricidad) / B)
         q_max_kg = q_max_ton / 10 
         if q_max_kg <= q_adm:
-            st.success(f"✅ $q_{{max}}$: **{round(q_max_kg, 2)} $
+            st.success(f"✅ q_max: **{round(q_max_kg, 2)} kg/cm2** (Cumple menor a {q_adm})")
+        else:
+            st.error(f"❌ q_max: **{round(q_max_kg, 2)} kg/cm2** (Excede {q_adm}, ensanchar base)")
+    else:
+        st.warning("⚠️ La resultante cae fuera del tercio central (¡Peligro de levantamiento!)")
+
+elif choice == "Módulo de Acero":
+    st.header("⚙️ Gestión y Cuantía de Acero")
+    barras = {"Ø 6 mm": [0.28, 0.222], "Ø 8 mm": [0.50, 0.395], "Ø 10 mm": [0.79, 0.617], 
+              "Ø 12 mm": [1.13, 0.888], "Ø 16 mm": [2.01, 1.578], "Ø 20 mm": [3.14, 2.466], "Ø 25 mm": [4.91, 3.853]}
+    tab1, tab2 = st.tabs(["Cálculo por Área", "Equivalencia de Barras"])
+    
+    with tab1:
+        st.subheader("1️⃣ Varillas necesarias según el cálculo")
+        area_req = st.number_input("Área de acero requerida (cm2)", min_value=0.1, value=10.0, step=0.1)
+        for diametro, datos in barras.items():
+            cantidad = math.ceil(area_req / datos[0])
+            st.write(f"- **{cantidad} varillas de {diametro}** | Provee: **{round(cantidad * datos[0], 2)} cm2** | Peso: **{round(cantidad * datos[1], 2)} kg/m**")
+            
+    with tab2:
+        st.subheader("2️⃣ Cambio de Diámetros en Obra")
+        col1, col2 = st.columns(2)
+        with col1: cant_actual = st.number_input("Cantidad de barras", min_value=1, value=4, step=1)
+        with col2: diam_actual = st.selectbox("Diámetro en planos", list(barras.keys()), index=4) 
+        
+        area_actual = cant_actual * barras[diam_actual][0]
+        peso_actual = cant_actual * barras[diam_actual][1]
+        st.info(f"Acero de diseño: **{area_actual:.2f} cm2** | Peso lineal: **{peso_actual:.2f} kg/m**")
+        
+        st.markdown("### 🔄 Alternativas de armado:")
+        for diametro, datos in barras.items():
+            if diametro != diam_actual:
+                cant_equiv = math.ceil(area_actual / datos[0])
+                dif_peso = (cant_equiv * datos[1]) - peso_actual
+                txt_peso = f"(+{dif_peso:.2f} kg/m extra)" if dif_peso > 0 else f"({dif_peso:.2f} kg/m ahorro)"
+                st.write(f"- Usar **{cant_equiv} de {diametro}** | Provee: **{cant_equiv * datos[0]:.2f} cm2** | {txt_peso}")
