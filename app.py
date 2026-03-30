@@ -7,8 +7,11 @@ st.title("🏗️ CivilCheck Pro: Verificación en Obra")
 st.caption("Conforme a la Norma Boliviana NB 1225001 y ACI 318")
 st.markdown("---")
 
-# Menú lateral
-menu = ["Vigas y Nervios", "Losas", "Columnas", "Zapatas Aisladas", "Muros de Contención", "Módulo de Acero", "Detalles de Armado"]
+# Menú lateral actualizado
+menu = [
+    "Vigas y Nervios", "Losas", "Columnas", "Zapatas Aisladas", 
+    "Muros de Contención", "Vigas Planas y Deflexión", "Módulo de Acero", "Detalles de Armado"
+]
 choice = st.sidebar.radio("Navegación", menu)
 
 # --- FIRMA DEL AUTOR ---
@@ -157,6 +160,58 @@ elif choice == "Muros de Contención":
     else:
         st.warning("⚠️ La resultante cae fuera del tercio central (¡Peligro de levantamiento!)")
 
+elif choice == "Vigas Planas y Deflexión":
+    st.header("📉 Verificación de Vigas Planas / Esbeltas")
+    st.write("Verifica si las dimensiones propuestas generarán problemas de deflexión.")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        L_viga = st.number_input("Luz libre (m)", min_value=1.0, value=10.0, step=0.5)
+        b_viga_plana = st.number_input("Ancho de la viga (cm)", min_value=10, value=40, step=5)
+        h_viga_plana = st.number_input("Peralte/Alto de la viga (cm)", min_value=10, value=20, step=5)
+    with col2:
+        fc_viga = st.selectbox("f'c Hormigón (kg/cm2)", [210, 250, 280, 350], index=0)
+        carga_lineal = st.number_input("Carga total estimada (Ton/m)", min_value=0.1, value=1.5, step=0.1, help="Carga Muerta + Viva linealizada sobre la viga")
+
+    st.markdown("### 1️⃣ Análisis de Esbeltez Normativa")
+    esbeltez = L_viga / (h_viga_plana / 100)
+    
+    if esbeltez <= 21:
+        st.success(f"✅ Relación L/h = **{round(esbeltez, 1)}**. Cumple con los espesores mínimos normativos para no verificar deflexión.")
+    else:
+        st.error(f"❌ Relación L/h = **{round(esbeltez, 1)}**. ¡Peligro! Esbeltez extrema. La norma exige L/h máximo de 21 (para extremos continuos) o 16 (simplemente apoyada).")
+        st.write(f"Para una luz de {L_viga} m, el peralte mínimo debería ser entre **{math.ceil((L_viga/21)*100)} cm y {math.ceil((L_viga/16)*100)} cm**.")
+
+    st.markdown("### 2️⃣ Estimación de Deflexión")
+    st.caption("Cálculo elástico simplificado para una viga simplemente apoyada bajo carga uniformemente distribuida.")
+    
+    # Inercia Bruta (m4)
+    b_m = b_viga_plana / 100
+    h_m = h_viga_plana / 100
+    Ig = (b_m * (h_m**3)) / 12
+    
+    # Módulo de elasticidad (Ton/m2)
+    Ec = 15100 * math.sqrt(fc_viga) * 10 
+    
+    # Deflexión elástica instantánea (m) -> = (5 * W * L^4) / (384 * E * I)
+    # W está en ton/m, L en m, Ec en ton/m2, Ig en m4
+    delta_inst_m = (5 * carga_lineal * (L_viga**4)) / (384 * Ec * Ig)
+    delta_inst_cm = delta_inst_m * 100
+    
+    # Deflexión a largo plazo (diferida por fluencia y fisuración, típicamente 2.5 a 3 veces la instantánea)
+    delta_long_cm = delta_inst_cm * 3.0
+    
+    deflexion_admisible = (L_viga * 100) / 300
+    
+    st.info(f"Inercia Bruta ($I_g$): **{Ig:.6f} $m^4$**")
+    
+    st.write(f"- Deflexión Elástica Instantánea (Ideal): **{round(delta_inst_cm, 2)} cm**")
+    st.write(f"- Deflexión Real a Largo Plazo (Fisurada + Creep): **Aprox. {round(delta_long_cm, 2)} cm**")
+    st.write(f"- Límite Admisible Norma ($L/300$): **{round(deflexion_admisible, 2)} cm**")
+    
+    if delta_long_cm > deflexion_admisible:
+        st.error("⚠️ La viga fallará por servicio. Excede ampliamente los límites de deformación. Recomendación: Aumentar dramáticamente el peralte o colocar apoyos intermedios.")
+
 elif choice == "Módulo de Acero":
     st.header("⚙️ Gestión y Cuantía de Acero")
     barras = {"Ø 6 mm": [0.28, 0.222], "Ø 8 mm": [0.50, 0.395], "Ø 10 mm": [0.79, 0.617], 
@@ -205,13 +260,11 @@ elif choice == "Detalles de Armado":
             d_long_col = st.selectbox("Ø longitudinal (mm)", [12, 16, 20, 25], index=1)
             d_estribo_col = st.selectbox("Ø estribo (mm)", [6, 8, 10, 12], index=1)
             
-        # Áreas y cuantía
         area_concreto = b_col * h_col
         area_barra_col = (math.pi * (d_long_col/10)**2) / 4
         area_acero_col = cant_barras_col * area_barra_col
         cuantia = (area_acero_col / area_concreto) * 100
         
-        # Separación máxima de estribos (zonas no confinadas)
         s_max_1 = 16 * (d_long_col / 10)
         s_max_2 = 48 * (d_estribo_col / 10)
         s_max_3 = min(b_col, h_col)
@@ -220,13 +273,10 @@ elif choice == "Detalles de Armado":
         st.markdown("#### Resultados Columna:")
         if 1.0 <= cuantia <= 8.0:
             st.success(f"✅ Cuantía de acero: **{round(cuantia, 2)}%** (Cumple entre 1% y 8%)")
-            if cuantia > 4.0:
-                st.warning("⚠️ Cuantía mayor al 4%. Cuidado con la congestión en zonas de traslape.")
         else:
             st.error(f"❌ Cuantía de acero: **{round(cuantia, 2)}%** (No cumple límites normativos)")
             
         st.info(f"📏 Separación MAX de estribos sugerida: **{math.floor(s_max_estribo)} cm**")
-        st.caption("Nota: En nudos y zonas de confinamiento sísmico, esta separación suele reducirse a la mitad (s/2).")
 
     with tab_viga:
         st.subheader("Armadura en Vigas")
@@ -240,26 +290,20 @@ elif choice == "Detalles de Armado":
             d_long_viga = st.selectbox("Ø longitudinal viga (mm)", [12, 16, 20, 25], index=1)
             d_estribo_viga = st.selectbox("Ø estribo viga (mm)", [6, 8, 10, 12], index=1)
             
-        # Separación de estribos
         peralte_efectivo_d = h_viga - recubrimiento - (d_estribo_viga/10) - (d_long_viga/10)/2
         s_max_corte = peralte_efectivo_d / 2
         
-        # Separación libre horizontal entre barras
         ancho_disponible = b_viga - 2*recubrimiento - 2*(d_estribo_viga/10)
         suma_diametros = cant_barras_viga * (d_long_viga/10)
         espacio_libre_total = ancho_disponible - suma_diametros
         
-        if cant_barras_viga > 1:
-            separacion_libre = espacio_libre_total / (cant_barras_viga - 1)
-        else:
-            separacion_libre = ancho_disponible # Solo una barra (no usual)
+        separacion_libre = espacio_libre_total / (cant_barras_viga - 1) if cant_barras_viga > 1 else ancho_disponible
             
         st.markdown("#### Resultados Viga:")
-        st.info(f"📏 Separación MAX de estribos (por corte no sísmico): **d/2 = {math.floor(s_max_corte)} cm**")
+        st.info(f"📏 Separación MAX estribos (corte no sísmico): **d/2 = {math.floor(s_max_corte)} cm**")
         
-        # Verificación de paso de agregado
-        sep_minima_norma = max(2.5, d_long_viga/10) # Faltaría evaluar 4/3 del tamaño máximo del agregado
+        sep_minima_norma = max(2.5, d_long_viga/10) 
         if separacion_libre >= sep_minima_norma:
-            st.success(f"✅ Separación libre entre barras: **{round(separacion_libre, 2)} cm** (Pasa el vibrador y el hormigón)")
+            st.success(f"✅ Separación libre barras: **{round(separacion_libre, 2)} cm** (Pasa vibrador)")
         else:
-            st.error(f"❌ Separación libre: **{round(separacion_libre, 2)} cm** (Riesgo de cangrejeras. Se requiere mínimo {sep_minima_norma} cm. Considere armar en 2 capas o usar mayor diámetro).")
+            st.error(f"❌ Separación libre: **{round(separacion_libre, 2)} cm** (Riesgo de cangrejeras, mínimo {sep_minima_norma} cm)")
